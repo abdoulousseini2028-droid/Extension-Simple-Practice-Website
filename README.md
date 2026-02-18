@@ -12,24 +12,6 @@ A Chrome extension that automatically fills client information forms on SimplePr
 
 <img width="1860" height="1728" alt="image" src="https://github.com/user-attachments/assets/741f7943-55c1-4f3b-9d3f-d4f5c83ba5aa" />
 
-
-
-## Usage
-
-1. Navigate to any SimplePractice client form (e.g., Create Client page)
-2. Click the extension icon in your Chrome toolbar
-3. Fill in the client information in the popup:
-   - Client Type (Adult/Minor/Couple)
-   - Billing Type (Self-pay/Insurance)
-   - First Name
-   - Last Name
-   - Preferred Name (optional)
-   - Email
-   - Phone Number (automatically formatted)
-   - Date of Birth (MM/DD/YYYY)
-4. Click "Fill Form"
-5. The extension will automatically fill all matching fields
-
 ## Supported Fields
 
 - **Client Type:** Adult, Minor, Couple
