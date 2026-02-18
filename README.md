@@ -12,14 +12,6 @@ A Chrome extension that automatically fills client information forms on SimplePr
 
 <img width="1860" height="1728" alt="image" src="https://github.com/user-attachments/assets/741f7943-55c1-4f3b-9d3f-d4f5c83ba5aa" />
 
-## Supported Fields
-
-- **Client Type:** Adult, Minor, Couple
-- **Billing Type:** Self-pay, Insurance
-- **Text Fields:** First name, Last name, Preferred name, Email
-- **Phone Number:** Automatically formats as (XXX) XXX-XXXX
-- **Date of Birth:** Month (name), Day, Year dropdowns
-
 ## Technical Details
 
 ### Permissions Required
