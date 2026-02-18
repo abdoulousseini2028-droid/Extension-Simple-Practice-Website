@@ -10,7 +10,8 @@ A Chrome extension that automatically fills client information forms on SimplePr
 4. Click "Load unpacked"
 5. Select the extension folder
 
-<img width="758" height="1216" alt="image" src="https://github.com/user-attachments/assets/f3eb952a-9ec3-4576-9354-74b558311459" />
+<img width="1860" height="1728" alt="image" src="https://github.com/user-attachments/assets/741f7943-55c1-4f3b-9d3f-d4f5c83ba5aa" />
+
 
 
 ## Usage
