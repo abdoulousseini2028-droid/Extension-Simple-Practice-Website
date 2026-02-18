@@ -3,42 +3,139 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Extension SP</title>
+  <title>SimplePractice Autofill</title>
   <style>
     body {
-      width: 300px;
+      width: 320px;
       padding: 20px;
       font-family: Arial, sans-serif;
     }
     h1 {
       font-size: 18px;
       margin: 0 0 15px 0;
+      color: #333;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 600;
+      font-size: 13px;
+      color: #555;
+    }
+    input, select {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: #4CAF50;
+    }
+    select {
+      background-color: white;
+      cursor: pointer;
+    }
+    .date-group {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .date-group input {
+      margin-bottom: 0;
+    }
+    .date-group .month {
+      flex: 2;
+    }
+    .date-group .day {
+      flex: 1;
+    }
+    .date-group .year {
+      flex: 1.5;
     }
     button {
-      padding: 10px 20px;
+      padding: 12px 20px;
       background-color: #4CAF50;
       color: white;
       border: none;
       border-radius: 4px;
       cursor: pointer;
       width: 100%;
+      font-size: 14px;
+      font-weight: 600;
     }
     button:hover {
       background-color: #45a049;
     }
+    button:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
     #status {
-      margin-top: 15px;
+      margin-top: 12px;
       padding: 10px;
       background-color: #f0f0f0;
       border-radius: 4px;
-      min-height: 20px;
+      font-size: 13px;
+      color: #666;
+      display: none;
+    }
+    #status.show {
+      display: block;
+    }
+    #status.success {
+      background-color: #d4edda;
+      color: #155724;
+    }
+    #status.error {
+      background-color: #f8d7da;
+      color: #721c24;
     }
   </style>
 </head>
 <body>
-  <h1>Extension SP</h1>
-  <button id="actionBtn">Click Me</button>
+  <h1>SimplePractice Autofill</h1>
+  
+  <label for="clientType">Client Type</label>
+  <select id="clientType">
+    <option value="">-- Select --</option>
+    <option value="adult">Adult</option>
+    <option value="minor">Minor</option>
+    <option value="couple">Couple</option>
+  </select>
+  
+  <label for="billingType">Billing Type</label>
+  <select id="billingType">
+    <option value="">-- Select --</option>
+    <option value="self-pay">Self-pay</option>
+    <option value="insurance">Insurance</option>
+  </select>
+  
+  <label for="firstName">First Name</label>
+  <input type="text" id="firstName" placeholder="John">
+  
+  <label for="lastName">Last Name</label>
+  <input type="text" id="lastName" placeholder="Doe">
+  
+  <label for="email">Email</label>
+  <input type="email" id="email" placeholder="john.doe@example.com">
+  
+  <label for="phone">Phone (10 digits)</label>
+  <input type="tel" id="phone" placeholder="(555) 123-4567">
+  
+  <label for="dobMonth">Date of Birth</label>
+  <div class="date-group">
+    <input type="text" id="dobMonth" class="month" placeholder="MM" maxlength="2" aria-label="Month">
+    <input type="text" id="dobDay" class="day" placeholder="DD" maxlength="2" aria-label="Day">
+    <input type="text" id="dobYear" class="year" placeholder="YYYY" maxlength="4" aria-label="Year">
+  </div>
+  
+  <button id="fillBtn">Fill Form</button>
   <div id="status"></div>
+  
   <script src="popup.js"></script>
 </body>
 </html>

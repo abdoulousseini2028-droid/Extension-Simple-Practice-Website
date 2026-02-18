@@ -1,29 +1,21 @@
 {
   "manifest_version": 3,
-  "name": "Extension SP",
+  "name": "SimplePractice Autofill",
   "version": "1.0.0",
-  "description": "A browser extension",
+  "description": "Autofills form fields within the SimplePractice web application",
   "permissions": [
     "activeTab",
-    "storage"
+    "storage",
+    "scripting"
   ],
   "action": {
-    "default_popup": "popup.html",
-    "default_icon": {
-      "16": "icon16.png",
-      "48": "icon48.png",
-      "128": "icon128.png"
-    }
+    "default_popup": "popup.html"
   },
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
-      "js": ["content.js"]
+      "matches": ["*://*.simplepractice.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
     }
-  ],
-  "icons": {
-    "16": "icon16.png",
-    "48": "icon48.png",
-    "128": "icon128.png"
-  }
+  ]
 }
