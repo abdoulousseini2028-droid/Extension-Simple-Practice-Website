@@ -2,16 +2,6 @@
 
 A Chrome extension that automatically fills client information forms on SimplePractice.
 
-## Features
-
-1. Auto-fills client information in SimplePractice forms
-2. Handles complex Ember.js components and masked inputs
-3. Supports client type and billing type selection
-4. Phone number formatting with automatic masking
-5. Date of birth support (month/day/year dropdowns)
-6. Works with dynamically loaded SPA forms
-7. Automatic retry mechanism for slow-loading forms
-
 ## Installation
 
 1. Download or clone this repository
@@ -87,13 +77,6 @@ extension-sp/
 └── DEVELOPMENT.md     # Developer documentation
 ```
 
-### Key Technologies
-- Chrome Extension Manifest V3
-- Vanilla JavaScript (no frameworks)
-- Chrome Storage API
-- Chrome Tabs & Scripting API
-- Native DOM Events
-- Ember.js compatibility layer
 
 ## Privacy & Security
 
