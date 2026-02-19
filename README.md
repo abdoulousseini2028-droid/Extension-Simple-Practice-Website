@@ -30,16 +30,6 @@ Only works on `*.simplepractice.com` domains for security.
 - Check the browser console for any error messages
 - Try clicking "Fill Form" again (the extension has a 10-attempt retry mechanism)
 
-### Phone number shows partial digits
-- This is normal behavior during filling
-- Wait for the extension to complete (about 3 seconds)
-- The phone number fills with delays to work with SimplePractice's input mask
-
-### Form fields aren't detected
-- SimplePractice may have updated their form structure
-- Check the console logs for diagnostic information
-- The extension logs detailed field detection data
-
 ## Development
 
 For detailed development documentation, technical challenges, and solutions, see [DEVELOPMENT.md](DEVELOPMENT.md).
@@ -58,9 +48,9 @@ extension-sp/
 
 ## Privacy & Security
 
-- **No data collection:** All data stays on your computer
-- **No external requests:** Extension only interacts with SimplePractice
-- **Local storage only:** Data saved using Chrome's sync storage
+- **No data collection:**
+- **No external requests:** 
+- **Local storage only:** 
 - **Domain restricted:** Only activates on SimplePractice domains
 - **No tracking or analytics**
 
