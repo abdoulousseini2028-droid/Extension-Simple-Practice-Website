@@ -1,5 +1,4 @@
-# SimplePractice Autofill - Architecture & Code Reference
-
+# Architecture 
 Quick reference guide for the codebase structure and key functions.
 
 ## File Overview
