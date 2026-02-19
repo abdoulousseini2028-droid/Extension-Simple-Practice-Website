@@ -112,20 +112,13 @@ Clicks "Contact" tab and "Add email/phone" buttons.
 
 #### `findTabByText(text)`
 Safely finds tab without clicking external links.
-- **Priority:**
-  1. `role="tab"` elements
-  2. Tab-like buttons
-  3. Clickable elements (excluding external links)
-- **Returns:** Element or null
+- **Returns:** Element (`role="tab"` , Tab-like buttons, Clickable elements (excluding external links)) or null
 
 ### Radio Group Handling
 
 #### `fillRadioGroups(radios, data)`
 Fills client type and billing type radio buttons.
 - **Parameters:** radios (pre-queried array), data (form data)
-- **Matches:**
-  - Client type: Adult, Minor, Couple
-  - Billing type: Self-pay, Insurance
 - **Returns:** Count of fields filled
 
 ### Text Field Filling
@@ -172,40 +165,35 @@ Semantic matching.
 
 #### `fillRegularField(field, value)`
 Fill non-masked text fields.
-- **Events:** input, change, blur, focus
-- **Uses:** Native value setter for Ember compatibility
 
 ### Select Dropdown Handling
 
 #### `fillSelectDropdowns(selects, data)`
 Fills month/day/year dropdowns for DOB.
 - **Parameters:** selects (pre-queried array), data (form data)
-- **Auto-converts:** Month numbers to names (11 → November)
-- **Matches:** Standalone keywords (month, day, year)
+- Auto-converts Month numbers to names (11 → November)
+- Matches Standalone keywords (month, day, year)
 - **Returns:** Count of fields filled
 
 #### `selectDropdownOption(select, targetValue)`
 Multiple matching strategies for select options.
 
-**Strategies:**
 1. Exact value match
 2. Case-insensitive text match
 3. Partial text match (startsWith)
 4. Partial text match (includes)
-
-**Special:** Auto-detects month dropdowns and converts numbers
+5. Auto-detects month dropdowns and converts numbers
 
 #### `convertMonthToName(monthNum)`
 Converts numeric month to name.
 - **Input:** "01", "1", "11", etc.
 - **Output:** "January", "November", etc.
-- **Fallback:** Returns original if not a month number
+- Returns original if not a month number
 
 ### Date Field Utilities
 
 #### `isDateField(field)`
-Detects date-related fields.
-- **Keywords:** birth, dob, date, month, day, year
+Detects date-related fields (birth, dob, date, month, day, year)
 - **Returns:** Boolean
 
 ## Key Technical Patterns
@@ -219,7 +207,7 @@ const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
 
 nativeInputValueSetter.call(field, newValue);
 ```
-**Bypasses React/Ember synthetic event systems**
+**Bypasses Ember synthetic event systems**
 
 ### 2. Full Keyboard Event Simulation
 ```javascript
