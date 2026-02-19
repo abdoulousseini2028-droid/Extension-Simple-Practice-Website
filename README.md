@@ -40,9 +40,12 @@ extension-sp/
 ├── manifest.json       # Chrome extension configuration
 ├── popup.html         # Extension popup interface
 ├── popup.js           # Popup logic and message passing
-├── content.js         # Main autofill engine (~1,760 lines)
+├── content.js         # Main autofill engine (~666 lines, optimized)
+├── content-old.js     # Original implementation (archived)
 ├── README.md          # User documentation (this file)
-└── DEVELOPMENT.md     # Developer documentation
+├── DEVELOPMENT.md     # Developer documentation
+├── ARCHITECTURE.md    # Technical architecture reference
+└── REFACTORING-SUMMARY.md  # Refactoring details
 ```
 
 
