@@ -1,18 +1,3 @@
-/**
- * SimplePractice Autofill Extension - Content Script
- * 
- * This script fills client information forms on SimplePractice.
- * Triggered manually from extension popup.
- * 
- * Key Features:
- * - SPA retry mechanism for dynamically loaded forms
- * - Semantic field matching (name, id, aria-label, placeholder, labels)
- * - Ember.js masked input compatibility  
- * - Radio group selection (client type, billing type)
- * - Dynamic contact field activation (email/phone buttons)
- * - Date of birth with month name conversion
- */
-
 'use strict';
 
 // ============================================================================
