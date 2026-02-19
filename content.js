@@ -33,6 +33,38 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 // ============================================================================
+// FIELD MATCHING CONFIGURATION
+// ============================================================================
+
+const FIELD_MATCHERS = [
+  {
+    type: 'firstName',
+    keywords: [['first', 'name'], ['given', 'name']],
+    getValue: data => data.firstName
+  },
+  {
+    type: 'lastName',
+    keywords: [['last', 'name'], ['surname'], ['family', 'name']],
+    getValue: data => data.lastName
+  },
+  {
+    type: 'preferredName',
+    keywords: [['prefer'], ['nickname'], [/\bgo\s+by\b/]],
+    getValue: data => data.preferredName
+  },
+  {
+    type: 'email',
+    keywords: [['email'], ['e-mail']],
+    getValue: data => data.email
+  },
+  {
+    type: 'phone',
+    keywords: [['phone'], ['mobile'], ['cell'], ['telephone']],
+    getValue: data => data.phone
+  }
+];
+
+// ============================================================================
 // CORE AUTOFILL ORCHESTRATOR
 // ============================================================================
 
@@ -42,14 +74,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
  */
 async function autofillWithRetry(data, maxRetries = 10, retryDelay = 300) {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    const visibleInputs = document.querySelectorAll(
-      'input[type="text"]:not([disabled]), input[type="email"]:not([disabled]), input[type="tel"]:not([disabled]), textarea:not([disabled])'
-    );
+    const allFields = getAllVisibleFields();
     
-    const visibleFields = Array.from(visibleInputs).filter(isVisible);
-    
-    if (visibleFields.length > 0) {
-      return await autofill(data);
+    if (allFields.inputs.length > 0) {
+      return await autofill(data, allFields);
     }
     
     if (attempt < maxRetries) {
@@ -67,26 +95,51 @@ async function autofillWithRetry(data, maxRetries = 10, retryDelay = 300) {
 /**
  * Main autofill orchestrator
  */
-async function autofill(data) {
+async function autofill(data, allFields = null) {
+  // Query DOM once if not provided
+  if (!allFields) {
+    allFields = getAllVisibleFields();
+  }
+  
   let totalFilled = 0;
   
   // 1. Ensure dynamic contact fields are visible
   await ensureDynamicContactFields(data);
   
+  // Re-query after dynamic fields may have been added
+  allFields = getAllVisibleFields();
+  
   // 2. Fill radio groups
-  totalFilled += fillRadioGroups(data);
+  totalFilled += fillRadioGroups(allFields.radios, data);
   
   // 3. Fill text fields
-  totalFilled += await fillTextFields(data);
+  totalFilled += await fillTextFields(allFields.inputs, data);
   
   // 4. Fill select dropdowns (DOB)
-  totalFilled += fillSelectDropdowns(data);
+  totalFilled += fillSelectDropdowns(allFields.selects, data);
   
   return {
     success: totalFilled > 0,
     fieldsFilledCount: totalFilled,
     message: totalFilled > 0 ? `Filled ${totalFilled} field(s)` : 'No matching fields found'
   };
+}
+
+/**
+ * Query DOM once and return all visible fields
+ */
+function getAllVisibleFields() {
+  const inputs = Array.from(document.querySelectorAll(
+    'input[type="text"], input[type="email"], input[type="tel"], input:not([type]), textarea'
+  )).filter(el => isVisible(el) && !el.disabled);
+  
+  const radios = Array.from(document.querySelectorAll('input[type="radio"]'))
+    .filter(isVisible);
+  
+  const selects = Array.from(document.querySelectorAll('select'))
+    .filter(el => isVisible(el) && !el.disabled);
+  
+  return { inputs, radios, selects };
 }
 
 // ============================================================================
@@ -177,10 +230,10 @@ function findButtonByText(textVariations) {
  * Find email input field
  */
 function findEmailField() {
-  const inputs = document.querySelectorAll('input[type="email"], input[type="text"]');
+  const inputs = getAllVisibleFields().inputs;
   for (const input of inputs) {
     const meta = getFieldMetadata(input);
-    if (meta.includes('email') && isVisible(input)) {
+    if (meta.includes('email')) {
       return input;
     }
   }
@@ -191,10 +244,10 @@ function findEmailField() {
  * Find phone input field
  */
 function findPhoneField() {
-  const inputs = document.querySelectorAll('input[type="tel"], input[type="text"]');
+  const inputs = getAllVisibleFields().inputs;
   for (const input of inputs) {
     const meta = getFieldMetadata(input);
-    if ((meta.includes('phone') || meta.includes('mobile')) && isVisible(input)) {
+    if (meta.includes('phone') || meta.includes('mobile')) {
       return input;
     }
   }
@@ -208,13 +261,10 @@ function findPhoneField() {
 /**
  * Fill radio groups (client type, billing type)
  */
-function fillRadioGroups(data) {
+function fillRadioGroups(radios, data) {
   let count = 0;
-  const radioGroups = document.querySelectorAll('input[type="radio"]');
   
-  for (const radio of radioGroups) {
-    if (!isVisible(radio)) continue;
-    
+  for (const radio of radios) {
     const labelText = getRadioLabelText(radio).toLowerCase();
     
     // Client type matching
@@ -279,15 +329,10 @@ function getRadioLabelText(radio) {
 /**
  * Fill text input and textarea fields
  */
-async function fillTextFields(data) {
+async function fillTextFields(inputs, data) {
   let count = 0;
-  const textFields = document.querySelectorAll(
-    'input[type="text"], input[type="email"], input[type="tel"], input:not([type]), textarea'
-  );
   
-  for (const field of textFields) {
-    if (!isVisible(field) || field.disabled) continue;
-    
+  for (const field of inputs) {
     const metadata = getFieldMetadata(field);
     const matchResult = matchFieldToDataType(metadata, data);
     
@@ -309,34 +354,32 @@ async function fillTextFields(data) {
 }
 
 /**
- * Match field metadata to data type
+ * Match field metadata to data type using configuration
  */
 function matchFieldToDataType(metadata, data) {
   const meta = metadata.toLowerCase();
   
-  // First name
-  if (matchesKeywords(meta, ['first', 'name']) || matchesKeywords(meta, ['given', 'name'])) {
-    return { matched: true, type: 'firstName', value: data.firstName };
-  }
-  
-  // Last name
-  if (matchesKeywords(meta, ['last', 'name']) || matchesKeywords(meta, ['surname']) || matchesKeywords(meta, ['family', 'name'])) {
-    return { matched: true, type: 'lastName', value: data.lastName };
-  }
-  
-  // Preferred name / nickname
-  if (meta.includes('prefer') || meta.includes('nickname') || meta.match(/\bgo\s+by\b/)) {
-    return { matched: true, type: 'preferredName', value: data.preferredName };
-  }
-  
-  // Email
-  if (meta.includes('email') || meta.includes('e-mail')) {
-    return { matched: true, type: 'email', value: data.email };
-  }
-  
-  // Phone
-  if (meta.includes('phone') || meta.includes('mobile') || meta.includes('cell') || meta.includes('telephone')) {
-    return { matched: true, type: 'phone', value: data.phone };
+  for (const matcher of FIELD_MATCHERS) {
+    for (const keywordSet of matcher.keywords) {
+      // Handle regex patterns
+      if (keywordSet.length === 1 && keywordSet[0] instanceof RegExp) {
+        if (keywordSet[0].test(meta)) {
+          return {
+            matched: true,
+            type: matcher.type,
+            value: matcher.getValue(data)
+          };
+        }
+      }
+      // Handle keyword arrays
+      else if (matchesKeywords(meta, keywordSet)) {
+        return {
+          matched: true,
+          type: matcher.type,
+          value: matcher.getValue(data)
+        };
+      }
+    }
   }
   
   return { matched: false, type: null, value: null };
@@ -356,13 +399,10 @@ function matchesKeywords(metadata, keywords) {
 /**
  * Fill select dropdowns for DOB
  */
-function fillSelectDropdowns(data) {
+function fillSelectDropdowns(selects, data) {
   let count = 0;
-  const selects = document.querySelectorAll('select');
   
   for (const select of selects) {
-    if (!isVisible(select) || select.disabled) continue;
-    
     const metadata = getFieldMetadata(select);
     const meta = metadata.toLowerCase();
     
@@ -517,11 +557,35 @@ async function fillPhoneField(field, value) {
     }
   }
   
-  // Wait for mask to settle
-  await wait(1000);
+  // Wait for mask to settle - check if value stabilizes
+  await waitForStableValue(field, 500, 100);
   
   // Dispatch change but NOT blur (blur causes validation failure)
   field.dispatchEvent(new Event('change', { bubbles: true }));
+}
+
+/**
+ * Wait for field value to stabilize (no longer changing)
+ * @param {HTMLElement} field - Field to monitor
+ * @param {number} maxWait - Maximum time to wait (ms)
+ * @param {number} checkInterval - How often to check (ms)
+ */
+async function waitForStableValue(field, maxWait = 500, checkInterval = 100) {
+  const startTime = Date.now();
+  let lastValue = field.value;
+  
+  while (Date.now() - startTime < maxWait) {
+    await wait(checkInterval);
+    
+    if (field.value === lastValue) {
+      // Value stabilized
+      return;
+    }
+    
+    lastValue = field.value;
+  }
+  
+  // Max wait reached
 }
 
 // ============================================================================
