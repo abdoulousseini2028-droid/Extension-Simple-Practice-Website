@@ -361,7 +361,7 @@ function fillSelectDropdowns(data) {
   const selects = document.querySelectorAll('select');
   
   for (const select of selects) {
-    if (!isVisible(select) || select.disbaled) continue;
+    if (!isVisible(select) || select.disabled) continue;
     
     const metadata = getFieldMetadata(select);
     const meta = metadata.toLowerCase();
