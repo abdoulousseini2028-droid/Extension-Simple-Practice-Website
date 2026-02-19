@@ -1,26 +1,57 @@
 'use strict';
 
 // ============================================================================
-// MESSAGE LISTENER - Entry Point
+// SIMPLEPRACTICE AUTOFILL ENGINE
 // ============================================================================
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === 'autofill') {
-    autofillWithRetry(request.data)
-      .then(result => sendResponse(result))
-      .catch(error => sendResponse({
-        success: false,
-        fieldsFilledCount: 0,
-        message: 'Error: ' + error.message
-      }));
-    return true; // Keep channel open for async response
-  }
-});
+const EXTENSION_VERSION = '1.0.0';
 
 // ============================================================================
-// FIELD MATCHING CONFIGURATION
+// PLATFORM GUARD - SimplePractice Domain Check
 // ============================================================================
 
+if (!location.hostname.includes('simplepractice.com')) {
+  // Exit early - script only runs on SimplePractice
+  throw new Error('SimplePractice Autofill: Not on simplepractice.com domain');
+}
+
+// ============================================================================
+// CONFIGURATION - SimplePractice Vocabulary
+// ============================================================================
+
+// Development mode - enables logging of unmatched fields
+const DEV_MODE = false;
+
+// Client type radio button keywords
+const CLIENT_TYPE_KEYWORDS = {
+  adult: ['adult'],
+  minor: ['minor'],
+  couple: ['couple']
+};
+
+// Billing type radio button keywords
+const BILLING_TYPE_KEYWORDS = {
+  'self-pay': ['self', 'self-pay'],
+  insurance: ['insurance']
+};
+
+// Contact tab identification
+const CONTACT_TAB_KEYWORDS = ['contact'];
+
+// Add email button keywords
+const ADD_EMAIL_BUTTON_KEYWORDS = ['add email', '+ email'];
+
+// Add phone button keywords
+const ADD_PHONE_BUTTON_KEYWORDS = ['add phone', '+ phone', 'add mobile'];
+
+// Date of birth field keywords
+const DOB_FIELD_KEYWORDS = {
+  month: /\bmonth\b/,
+  day: /\bday\b/,
+  year: /\byear\b/
+};
+
+// Field matchers configuration - defines how to match form fields to data types
 const FIELD_MATCHERS = [
   {
     type: 'firstName',
@@ -48,6 +79,23 @@ const FIELD_MATCHERS = [
     getValue: data => data.phone
   }
 ];
+
+// ============================================================================
+// MESSAGE LISTENER - Entry Point
+// ============================================================================
+
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === 'autofill') {
+    autofillWithRetry(request.data)
+      .then(result => sendResponse(result))
+      .catch(error => sendResponse({
+        success: false,
+        fieldsFilledCount: 0,
+        message: 'Error: ' + error.message
+      }));
+    return true; // Keep channel open for async response
+  }
+});
 
 // ============================================================================
 // CORE AUTOFILL ORCHESTRATOR
@@ -138,7 +186,7 @@ async function ensureDynamicContactFields(data) {
   if (!data.email && !data.phone) return;
   
   // Try to click Contact tab
-  const contactTab = findTabByText('Contact');
+  const contactTab = findTabByKeywords(CONTACT_TAB_KEYWORDS);
   if (contactTab) {
     contactTab.click();
     await wait(600);
@@ -146,7 +194,7 @@ async function ensureDynamicContactFields(data) {
   
   // Click "Add email" if email provided but field not visible
   if (data.email && !findEmailField()) {
-    const addEmailBtn = findButtonByText(['Add email', 'add email', '+ Email']);
+    const addEmailBtn = findButtonByKeywords(ADD_EMAIL_BUTTON_KEYWORDS);
     if (addEmailBtn) {
       addEmailBtn.click();
       await wait(600);
@@ -155,7 +203,7 @@ async function ensureDynamicContactFields(data) {
   
   // Click "Add phone" if phone provided but field not visible
   if (data.phone && !findPhoneField()) {
-    const addPhoneBtn = findButtonByText(['Add phone', 'add phone', '+ Phone', 'Add mobile']);
+    const addPhoneBtn = findButtonByKeywords(ADD_PHONE_BUTTON_KEYWORDS);
     if (addPhoneBtn) {
       addPhoneBtn.click();
       await wait(600);
@@ -164,15 +212,13 @@ async function ensureDynamicContactFields(data) {
 }
 
 /**
- * Find tab by text, excluding external links
+ * Find tab by keywords, excluding external links
  */
-function findTabByText(text) {
-  const searchText = text.toLowerCase();
-  
+function findTabByKeywords(keywords) {
   // Try proper ARIA tabs first
   const tabs = document.querySelectorAll('[role="tab"]');
   for (const tab of tabs) {
-    if (tab.textContent.toLowerCase().includes(searchText)) {
+    if (matchesAnyKeyword(tab.textContent.toLowerCase(), keywords)) {
       return tab;
     }
   }
@@ -180,7 +226,7 @@ function findTabByText(text) {
   // Try button-like elements with tab indicators
   const buttons = document.querySelectorAll('button, [role="button"], .tab, [class*="tab"]');
   for (const btn of buttons) {
-    if (btn.textContent.toLowerCase().includes(searchText)) {
+    if (matchesAnyKeyword(btn.textContent.toLowerCase(), keywords)) {
       // Exclude external links
       const links = btn.querySelectorAll('a[href]');
       const hasExternalLink = Array.from(links).some(link => 
@@ -196,14 +242,14 @@ function findTabByText(text) {
 }
 
 /**
- * Find button by text variations
+ * Find button by keyword list
  */
-function findButtonByText(textVariations) {
+function findButtonByKeywords(keywords) {
   const elements = document.querySelectorAll('button, [role="button"], a, span[class*="button"]');
   
   for (const el of elements) {
-    const text = el.textContent.trim();
-    if (textVariations.some(variation => text.includes(variation))) {
+    const text = el.textContent.trim().toLowerCase();
+    if (matchesAnyKeyword(text, keywords)) {
       return el;
     }
   }
@@ -217,8 +263,8 @@ function findButtonByText(textVariations) {
 function findEmailField() {
   const inputs = getAllVisibleFields().inputs;
   for (const input of inputs) {
-    const meta = getFieldMetadata(input);
-    if (meta.includes('email')) {
+    const metadata = extractFieldMetadata(input);
+    if (metadata.includes('email')) {
       return input;
     }
   }
@@ -231,8 +277,8 @@ function findEmailField() {
 function findPhoneField() {
   const inputs = getAllVisibleFields().inputs;
   for (const input of inputs) {
-    const meta = getFieldMetadata(input);
-    if (meta.includes('phone') || meta.includes('mobile')) {
+    const metadata = extractFieldMetadata(input);
+    if (metadata.includes('phone') || metadata.includes('mobile')) {
       return input;
     }
   }
@@ -255,11 +301,8 @@ function fillRadioGroups(radios, data) {
     // Client type matching
     if (data.clientType) {
       const clientType = data.clientType.toLowerCase();
-      if (
-        (clientType === 'adult' && labelText.includes('adult')) ||
-        (clientType === 'minor' && labelText.includes('minor')) ||
-        (clientType === 'couple' && labelText.includes('couple'))
-      ) {
+      const keywords = CLIENT_TYPE_KEYWORDS[clientType];
+      if (keywords && matchesAnyKeyword(labelText, keywords)) {
         radio.checked = true;
         radio.dispatchEvent(new Event('change', { bubbles: true }));
         count++;
@@ -270,10 +313,8 @@ function fillRadioGroups(radios, data) {
     // Billing type matching
     if (data.billingType) {
       const billingType = data.billingType.toLowerCase();
-      if (
-        (billingType === 'self-pay' && (labelText.includes('self') || labelText.includes('self-pay'))) ||
-        (billingType === 'insurance' && labelText.includes('insurance'))
-      ) {
+      const keywords = BILLING_TYPE_KEYWORDS[billingType];
+      if (keywords && matchesAnyKeyword(labelText, keywords)) {
         radio.checked = true;
         radio.dispatchEvent(new Event('change', { bubbles: true }));
         count++;
@@ -318,20 +359,22 @@ async function fillTextFields(inputs, data) {
   let count = 0;
   
   for (const field of inputs) {
-    const metadata = getFieldMetadata(field);
+    const metadata = extractFieldMetadata(field);
     const matchResult = matchFieldToDataType(metadata, data);
     
     if (matchResult.matched && matchResult.value) {
       try {
-        if (matchResult.type === 'phone') {
-          await fillPhoneField(field, String(matchResult.value));
-        } else {
-          await fillRegularField(field, String(matchResult.value));
-        }
+        await applyValueToField(field, String(matchResult.value), matchResult.type);
         count++;
       } catch (error) {
         // Silent fail for individual fields
+        if (DEV_MODE) {
+          console.warn('SimplePractice Autofill: Failed to fill field', metadata, error);
+        }
       }
+    } else if (DEV_MODE && !matchResult.matched) {
+      // Log unmatched fields in development mode
+      console.warn('SimplePractice Autofill: Unmatched field:', metadata);
     }
   }
   
@@ -388,13 +431,13 @@ function fillSelectDropdowns(selects, data) {
   let count = 0;
   
   for (const select of selects) {
-    const metadata = getFieldMetadata(select);
+    const metadata = extractFieldMetadata(select);
     const meta = metadata.toLowerCase();
     
     let valueToSelect = null;
     
     // Month dropdown
-    if (meta.match(/\bmonth\b/)) {
+    if (DOB_FIELD_KEYWORDS.month.test(meta)) {
       valueToSelect = data.dobMonth;
       // Convert number to month name if needed
       if (valueToSelect && /^\d{1,2}$/.test(valueToSelect)) {
@@ -402,16 +445,19 @@ function fillSelectDropdowns(selects, data) {
       }
     }
     // Day dropdown
-    else if (meta.match(/\bday\b/)) {
+    else if (DOB_FIELD_KEYWORDS.day.test(meta)) {
       valueToSelect = data.dobDay;
     }
     // Year dropdown
-    else if (meta.match(/\byear\b/)) {
+    else if (DOB_FIELD_KEYWORDS.year.test(meta)) {
       valueToSelect = data.dobYear;
     }
     
     if (valueToSelect && selectDropdownOption(select, valueToSelect)) {
       count++;
+    } else if (DEV_MODE && !valueToSelect) {
+      // Log unmatched dropdown
+      console.warn('SimplePractice Autofill: Unmatched dropdown:', metadata);
     }
   }
   
@@ -483,6 +529,20 @@ function selectDropdownOption(select, targetValue) {
 // ============================================================================
 // FIELD FILLING IMPLEMENTATIONS
 // ============================================================================
+
+/**
+ * Apply value to field - handles both regular and masked inputs
+ * @param {HTMLElement} field - The input field
+ * @param {string} value - The value to apply
+ * @param {string} type - The field type (e.g., 'phone', 'email', 'firstName')
+ */
+async function applyValueToField(field, value, type) {
+  if (type === 'phone') {
+    await fillPhoneField(field, value);
+  } else {
+    await fillRegularField(field, value);
+  }
+}
 
 /**
  * Fill regular text field (non-masked)
@@ -578,9 +638,10 @@ async function waitForStableValue(field, maxWait = 500, checkInterval = 100) {
 // ============================================================================
 
 /**
- * Get comprehensive field metadata for matching
+ * Extract comprehensive field metadata for matching
+ * Uses only semantic attributes - no class/ID exact matching
  */
-function getFieldMetadata(field) {
+function extractFieldMetadata(field) {
   const parts = [
     field.name || '',
     field.id || '',
@@ -623,6 +684,16 @@ function getAssociatedLabelText(field) {
   }
   
   return '';
+}
+
+/**
+ * Check if text matches any keyword in the list
+ * @param {string} text - Text to search in (should be lowercase)
+ * @param {Array<string>} keywords - Keywords to match
+ * @returns {boolean}
+ */
+function matchesAnyKeyword(text, keywords) {
+  return keywords.some(keyword => text.includes(keyword.toLowerCase()));
 }
 
 /**

@@ -5,137 +5,205 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SimplePractice Autofill</title>
   <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
     body {
       width: 320px;
-      padding: 20px;
-      font-family: Arial, sans-serif;
+      padding: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      font-size: 14px;
+      color: #333;
+      background: #f8f9fa;
     }
+
     h1 {
       font-size: 18px;
-      margin: 0 0 15px 0;
-      color: #333;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: #1a1a1a;
+      text-align: center;
     }
+
+    .form-group {
+      margin-bottom: 12px;
+    }
+
     label {
       display: block;
-      margin-bottom: 5px;
-      font-weight: 600;
-      font-size: 13px;
-      color: #555;
+      margin-bottom: 4px;
+      font-size: 12px;
+      font-weight: 500;
+      color: #666;
     }
-    input, select {
+
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    select {
       width: 100%;
-      padding: 8px;
-      margin-bottom: 12px;
+      padding: 8px 10px;
       border: 1px solid #ddd;
       border-radius: 4px;
       font-size: 14px;
-      box-sizing: border-box;
+      font-family: inherit;
+      background: white;
+      transition: border-color 0.2s;
     }
-    input:focus, select:focus {
+
+    input:focus,
+    select:focus {
       outline: none;
-      border-color: #4CAF50;
+      border-color: #4285f4;
     }
-    select {
-      background-color: white;
-      cursor: pointer;
-    }
-    .date-group {
-      display: flex;
+
+    .dob-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
       gap: 8px;
-      margin-bottom: 12px;
     }
-    .date-group input {
-      margin-bottom: 0;
+
+    .dob-group input {
+      padding: 8px 6px;
     }
-    .date-group .month {
-      flex: 2;
-    }
-    .date-group .day {
-      flex: 1;
-    }
-    .date-group .year {
-      flex: 1.5;
-    }
+
     button {
-      padding: 12px 20px;
-      background-color: #4CAF50;
+      width: 100%;
+      padding: 12px;
+      background: #4285f4;
       color: white;
       border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      width: 100%;
+      border-radius: 6px;
       font-size: 14px;
       font-weight: 600;
+      cursor: pointer;
+      margin-top: 16px;
+      transition: background 0.2s;
     }
+
     button:hover {
-      background-color: #45a049;
+      background: #3367d6;
     }
+
+    button:active {
+      background: #2851a3;
+    }
+
     button:disabled {
-      background-color: #ccc;
+      background: #ccc;
       cursor: not-allowed;
     }
+
     #status {
       margin-top: 12px;
-      padding: 10px;
-      background-color: #f0f0f0;
+      padding: 8px 12px;
       border-radius: 4px;
       font-size: 13px;
-      color: #666;
-      display: none;
+      text-align: center;
+      opacity: 0;
+      transition: opacity 0.3s;
     }
+
     #status.show {
-      display: block;
+      opacity: 1;
     }
+
     #status.success {
-      background-color: #d4edda;
+      background: #d4edda;
       color: #155724;
+      border: 1px solid #c3e6cb;
     }
+
     #status.error {
-      background-color: #f8d7da;
+      background: #f8d7da;
       color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin: 16px 0 8px 0;
+      padding-top: 12px;
+      border-top: 1px solid #e0e0e0;
+    }
+
+    .section-title:first-of-type {
+      margin-top: 0;
+      padding-top: 0;
+      border-top: none;
     }
   </style>
 </head>
 <body>
   <h1>SimplePractice Autofill</h1>
-  
-  <label for="clientType">Client Type</label>
-  <select id="clientType">
-    <option value="">-- Select --</option>
-    <option value="adult">Adult</option>
-    <option value="minor">Minor</option>
-    <option value="couple">Couple</option>
-  </select>
-  
-  <label for="billingType">Billing Type</label>
-  <select id="billingType">
-    <option value="">-- Select --</option>
-    <option value="self-pay">Self-pay</option>
-    <option value="insurance">Insurance</option>
-  </select>
-  
-  <label for="firstName">First Name</label>
-  <input type="text" id="firstName" placeholder="John">
-  
-  <label for="lastName">Last Name</label>
-  <input type="text" id="lastName" placeholder="Doe">
-  
-  <label for="email">Email</label>
-  <input type="email" id="email" placeholder="john.doe@example.com">
-  
-  <label for="phone">Phone (10 digits)</label>
-  <input type="tel" id="phone" placeholder="(555) 123-4567">
-  
-  <label for="dobMonth">Date of Birth</label>
-  <div class="date-group">
-    <input type="text" id="dobMonth" class="month" placeholder="MM" maxlength="2" aria-label="Month">
-    <input type="text" id="dobDay" class="day" placeholder="DD" maxlength="2" aria-label="Day">
-    <input type="text" id="dobYear" class="year" placeholder="YYYY" maxlength="4" aria-label="Year">
+
+  <div class="section-title">Client Information</div>
+
+  <div class="form-group">
+    <label for="clientType">Client Type</label>
+    <select id="clientType">
+      <option value="">-- Select --</option>
+      <option value="adult">Adult</option>
+      <option value="minor">Minor</option>
+      <option value="couple">Couple</option>
+    </select>
   </div>
-  
+
+  <div class="form-group">
+    <label for="billingType">Billing Type</label>
+    <select id="billingType">
+      <option value="">-- Select --</option>
+      <option value="self-pay">Self-Pay</option>
+      <option value="insurance">Insurance</option>
+    </select>
+  </div>
+
+  <div class="section-title">Personal Details</div>
+
+  <div class="form-group">
+    <label for="firstName">First Name</label>
+    <input type="text" id="firstName" placeholder="John">
+  </div>
+
+  <div class="form-group">
+    <label for="lastName">Last Name</label>
+    <input type="text" id="lastName" placeholder="Doe">
+  </div>
+
+  <div class="section-title">Contact Information</div>
+
+  <div class="form-group">
+    <label for="email">Email</label>
+    <input type="email" id="email" placeholder="john@example.com">
+  </div>
+
+  <div class="form-group">
+    <label for="phone">Phone</label>
+    <input type="tel" id="phone" placeholder="(555) 123-4567">
+  </div>
+
+  <div class="section-title">Date of Birth</div>
+
+  <div class="form-group">
+    <label>DOB (Month / Day / Year)</label>
+    <div class="dob-group">
+      <input type="text" id="dobMonth" placeholder="MM" maxlength="2">
+      <input type="text" id="dobDay" placeholder="DD" maxlength="2">
+      <input type="text" id="dobYear" placeholder="YYYY" maxlength="4">
+    </div>
+  </div>
+
   <button id="fillBtn">Fill Form</button>
+
   <div id="status"></div>
-  
+
   <script src="popup.js"></script>
 </body>
 </html>
