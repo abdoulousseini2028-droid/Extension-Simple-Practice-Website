@@ -27,11 +27,6 @@ Handles user input and communication with content script.
 ### content.js (666 lines)
 Main autofill engine.
 
-**Highlights:**
-- Configuration-driven field matching (FIELD_MATCHERS)
-- Single DOM query per autofill cycle
-- Passed arrays instead of re-querying
-
 ## Content.js Function Reference
 
 ### Configuration
@@ -83,17 +78,15 @@ Main orchestrator that calls specialized functions.
   6. Fill select dropdowns (passed selects array)
 - **Returns:** Object with fieldsFilledCount
 
-#### `getAllVisibleFields()`
-Single DOM query function.
-- **Purpose:** Query DOM once, filter by visibility/enabled
+#### `getAllVisibleFields()
+`Query DOM once, filter by visibility/enabled
 - **Returns:** Object with { inputs, radios, selects }
-- **Usage:** Called once per autofill cycle, results passed to functions
+Called once per autofill cycle, results passed to functions
 
 ### Field Detection & Matching
 
 #### `getFieldMetadata(field)`
-Collects metadata from 10+ sources.
-- **Sources:** name, id, placeholder, aria-label, data-testid, class
+Collects metadata from sources (name, id, placeholder, aria-label, data-testid, class, etc)
 - **Returns:** Combined string for semantic matching
 
 #### `getAssociatedLabelText(field)`
@@ -113,9 +106,9 @@ Checks if element is visible to user.
 
 #### `ensureDynamicContactFields(data)`
 Clicks "Contact" tab and "Add email/phone" buttons.
-- **Async:** Yes
-- **Waits:** 600ms between clicks
-- **Smart:** Only clicks if email/phone data provided
+- Async
+- Waits 600ms between clicks
+- Only clicks if email/phone data provided
 
 #### `findTabByText(text)`
 Safely finds tab without clicking external links.
@@ -140,24 +133,22 @@ Fills client type and billing type radio buttons.
 #### `fillTextFields(inputs, data)`
 Main async function for text input filling.
 - **Parameters:** inputs (pre-queried array), data (form data)
-- **Async:** Yes
-- **Uses:** for loop (not forEach) to support await
-- **Special:** Calls `fillPhoneField` for phone fields
+- Async
+- Calls `fillPhoneField` for phone fields
 - **Returns:** Count of fields filled
 
 #### `matchFieldToDataType(metadata, data)`
-Configuration-driven semantic matching.
-- **Uses:** FIELD_MATCHERS configuration array
-- **Logic:** Iterates through matchers, checks keywords
+Semantic matching.
+- Uses FIELD_MATCHERS configuration array
+- Iterates through matchers, checks keywords
 - **Returns:** Object with { matched, type, value }
 - Handles regex patterns and keyword arrays **Example:** Preferredname uses regex `/\bgo\s+by\b/`
 
 ### Phone Number Filling (The one I spent most time on)
 
 #### `fillPhoneField(field, value)`
-**OPTIMIZED** - Custom phone filling logic for Ember masked inputs.
+** Custom phone filling logic for Ember masked inputs.**
 
-**Strategy:**
 ```javascript
 1. Focus field
 2. Try setting formatted value directly
@@ -168,14 +159,13 @@ Configuration-driven semantic matching.
 7. DO NOT dispatch blur event (causes validation failure)
 ```
 
-- Smart wait: `waitForStableValue()` instead of fixed 1000ms
+- Wait for `waitForStableValue()` instead of fixed 1000ms
 
 **Returns:** Promise (async)
 
 #### `waitForStableValue(field, maxWait=500, checkInterval=100)`
-Smart wait function for phone mask.
-- **Purpose:** Wait until field value stops changing
-- **Strategy:** Poll every 100ms, return early if stable
+- Wait until field value stops changing
+- Poll every 100ms, return early if stable
 - **Returns:** Promise (resolves when stable or max wait reached)
 
 ### Regular Field Filling
